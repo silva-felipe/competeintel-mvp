@@ -36,6 +36,22 @@ export default function Home() {
   const [results, setResults] = useState<SearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Format CEP as user types: 12345678 -> 12345-678
+  const formatCEP = (value: string) => {
+    // Remove all non-digits
+    const numbers = value.replace(/\D/g, '');
+
+    // Limit to 8 digits
+    const limited = numbers.slice(0, 8);
+
+    // Add hyphen after 5th digit if we have more than 5 digits
+    if (limited.length > 5) {
+      return `${limited.slice(0, 5)}-${limited.slice(5)}`;
+    }
+
+    return limited;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -156,9 +172,9 @@ export default function Home() {
                 <input
                   type="text"
                   value={formData.cep || ''}
-                  onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, cep: formatCEP(e.target.value) })}
                   className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition"
-                  placeholder="00000-000"
+                  placeholder="12345-678"
                   maxLength={9}
                 />
               </div>
