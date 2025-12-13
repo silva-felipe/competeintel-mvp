@@ -5,18 +5,18 @@ Mock competitor data for Brazilian businesses across major cities
 from typing import List, Dict
 import random
 
-# Major Brazilian cities with coordinates
+# Major Brazilian cities with coordinates and real CEP prefixes
 CITIES = {
-    "São Paulo": {"lat": -23.5505, "lng": -46.6333, "state": "SP"},
-    "Rio de Janeiro": {"lat": -22.9068, "lng": -43.1729, "state": "RJ"},
-    "Belo Horizonte": {"lat": -19.9167, "lng": -43.9345, "state": "MG"},
-    "Brasília": {"lat": -15.7939, "lng": -47.8828, "state": "DF"},
-    "Curitiba": {"lat": -25.4284, "lng": -49.2733, "state": "PR"},
-    "Porto Alegre": {"lat": -30.0346, "lng": -51.2177, "state": "RS"},
-    "Salvador": {"lat": -12.9714, "lng": -38.5014, "state": "BA"},
-    "Fortaleza": {"lat": -3.7172, "lng": -38.5434, "state": "CE"},
-    "Recife": {"lat": -8.0476, "lng": -34.8770, "state": "PE"},
-    "Manaus": {"lat": -3.1190, "lng": -60.0217, "state": "AM"},
+    "São Paulo": {"lat": -23.5505, "lng": -46.6333, "state": "SP", "cep_prefix": "01"},
+    "Rio de Janeiro": {"lat": -22.9068, "lng": -43.1729, "state": "RJ", "cep_prefix": "20"},
+    "Belo Horizonte": {"lat": -19.9167, "lng": -43.9345, "state": "MG", "cep_prefix": "30"},
+    "Brasília": {"lat": -15.7939, "lng": -47.8828, "state": "DF", "cep_prefix": "70"},
+    "Curitiba": {"lat": -25.4284, "lng": -49.2733, "state": "PR", "cep_prefix": "80"},
+    "Porto Alegre": {"lat": -30.0346, "lng": -51.2177, "state": "RS", "cep_prefix": "90"},
+    "Salvador": {"lat": -12.9714, "lng": -38.5014, "state": "BA", "cep_prefix": "40"},
+    "Fortaleza": {"lat": -3.7172, "lng": -38.5434, "state": "CE", "cep_prefix": "60"},
+    "Recife": {"lat": -8.0476, "lng": -34.8770, "state": "PE", "cep_prefix": "50"},
+    "Manaus": {"lat": -3.1190, "lng": -60.0217, "state": "AM", "cep_prefix": "69"},
 }
 
 # Business categories with CNAE codes
@@ -138,14 +138,14 @@ def generate_phone() -> str:
     return f"({ddd}) {first_digit}{rest[:4]}-{rest[4:]}"
 
 
-def generate_address(city: str, state: str) -> Dict[str, str]:
-    """Generate a realistic Brazilian address"""
+def generate_address(city: str, state: str, cep_prefix: str = "01") -> Dict[str, str]:
+    """Generate a realistic Brazilian address with proper CEP for the city"""
     prefix = random.choice(STREET_PREFIXES)
     name = random.choice(STREET_NAMES)
     number = random.randint(1, 999)
     neighborhood = random.choice(["Centro", "Vila Nova", "Jardim das Flores", "Bairro Alto", "Zona Sul"])
-    cep_base = random.randint(10000, 99999)
-    cep = f"{cep_base:05d}-{random.randint(100, 999)}"
+    # Use city-specific CEP prefix + 3 random digits + hyphen + 3 more digits
+    cep = f"{cep_prefix}{random.randint(0, 999):03d}-{random.randint(0, 999):03d}"
     
     return {
         "street": f"{prefix} {name}, {number}",
@@ -249,7 +249,7 @@ def generate_mock_competitors(
                 "latitude": lat,
                 "longitude": lng
             },
-            "address": generate_address(city, city_data["state"]),
+            "address": generate_address(city, city_data["state"], city_data.get("cep_prefix", "01")),
             "phone": generate_phone(),
             "rating": rating,
             "review_count": review_count,

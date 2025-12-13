@@ -116,11 +116,21 @@ def _search_competitors_mock(
         
         # Filter by CEP if provided (match first 5 digits for area match)
         if cep:
-            # Remove formatting from CEP
-            cep_clean = cep.replace("-", "").replace(".", "")
-            data_cep_clean = data["address"]["postal_code"].replace("-", "").replace(".", "")
-            # Match first 5 digits (same area)
-            if not data_cep_clean.startswith(cep_clean[:5]):
+            try:
+                # Remove formatting from CEP
+                cep_clean = cep.replace("-", "").replace(".", "").replace(" ", "")
+                data_cep_clean = data["address"]["postal_code"].replace("-", "").replace(".", "").replace(" ", "")
+                
+                # Brazilian CEP must be 8 digits
+                if len(cep_clean) == 8 and len(data_cep_clean) == 8:
+                    # Match first 5 digits (represents the broader area in Brazilian CEP system)
+                    if not data_cep_clean[:5] == cep_clean[:5]:
+                        continue
+                else:
+                    # Skip if CEP format is invalid
+                    continue
+            except (KeyError, AttributeError, TypeError):
+                # Skip this competitor if CEP data is malformed
                 continue
         
         competitor = Competitor(

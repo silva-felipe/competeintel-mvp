@@ -104,11 +104,8 @@ async def search_competitor_analysis(request: CompetitorSearchRequest):
             cep=request.cep
         )
         
-        if not competitors:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Nenhum concorrente encontrado para {request.category.value} em {request.city}"
-            )
+        # Note: Empty results are valid - filters might be too restrictive
+        # Don't raise 404, just return empty list with message in analytics
         
         # Generate analytics
         # Note: For now, we don't have "your business" data

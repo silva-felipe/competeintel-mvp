@@ -51,11 +51,22 @@ class CompetitorSearchRequest(BaseModel):
     city: str = Field(..., min_length=2, description="City name")
     state: Optional[str] = Field(None, min_length=2, max_length=2, description="State abbreviation (e.g., SP, RJ)")
     neighborhood: Optional[str] = Field(None, description="Neighborhood/bairro for more precise search")
-    cep: Optional[str] = Field(None, description="CEP (postal code) for exact location search")
+    cep: Optional[str] = Field(None, description="CEP (postal code) for exact location search - format: XXXXX-XXX or 8 digits")
     address: Optional[str] = Field(None, description="Full address (optional)")
     coordinates: Optional[Coordinates] = Field(None, description="Coordinates (if known)")
     radius_km: float = Field(5.0, ge=0.5, le=50, description="Search radius in kilometers")
     max_results: int = Field(10, ge=1, le=50, description="Maximum number of competitors to return")
+
+    @validator('cep')
+    def validate_cep(cls, v):
+        if v is None or v == "" or v.strip() == "":
+            return None  # Empty string becomes None (optional field)
+        # Remove formatting
+        cep_clean = v.replace("-", "").replace(".", "").replace(" ", "")
+        # Must be exactly 8 digits
+        if not cep_clean.isdigit() or len(cep_clean) != 8:
+            raise ValueError('CEP must be 8 digits in format XXXXX-XXX or 12345678')
+        return v
 
     class Config:
         json_schema_extra = {
@@ -70,6 +81,8 @@ class CompetitorSearchRequest(BaseModel):
                 "max_results": 10
             }
         }
+
+
 
 
 class Competitor(BaseModel):
