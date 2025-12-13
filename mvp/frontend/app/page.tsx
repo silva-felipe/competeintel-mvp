@@ -42,7 +42,15 @@ export default function Home() {
     setError(null);
 
     try {
-      const data = await searchCompetitors(formData);
+      // Clean up form data - convert empty strings to undefined
+      const cleanedData = {
+        ...formData,
+        business_name: formData.business_name?.trim() || undefined,
+        neighborhood: formData.neighborhood?.trim() || undefined,
+        cep: formData.cep?.trim() || undefined,
+      };
+
+      const data = await searchCompetitors(cleanedData);
       setResults(data);
     } catch (err: any) {
       setError(err.message || 'Erro ao buscar concorrentes');
