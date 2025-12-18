@@ -22,7 +22,7 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 USE_MOCK_DATA = os.getenv("USE_MOCK_DATA", "true").lower() == "true"
 API_TITLE = os.getenv("API_TITLE", "CompeteIntel API")
 API_VERSION = os.getenv("API_VERSION", "1.0.0")
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001,http://localhost:8080,http://localhost:8081").split(",")
 
 # Initialize FastAPI app
 app = FastAPI(

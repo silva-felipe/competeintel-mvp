@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Descubra seus concorrentes e domine o mercado. Análise competitiva inteligente para empresas brasileiras.">
+    <meta name="description"
+        content="Descubra seus concorrentes e domine o mercado. Análise competitiva inteligente para empresas brasileiras.">
     <title>CompeteIntel | Inteligência Competitiva para o Mercado Brasileiro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <!-- Navigation -->
     <nav class="navbar">
@@ -249,19 +254,18 @@
             <div class="cta-content">
                 <h2 class="cta-title">Pronto para Dominar Seu Mercado?</h2>
                 <p class="cta-subtitle">Comece sua análise competitiva gratuita agora mesmo</p>
-                <form class="demo-form">
-                    <input type="text" placeholder="Nome da sua empresa" class="form-input" required>
-                    <input type="email" placeholder="Seu melhor e-mail" class="form-input" required>
-                    <input type="text" placeholder="Cidade/Estado" class="form-input" required>
-                    <select class="form-input" required>
-                        <option value="">Selecione seu setor</option>
-                        <option value="food">Alimentação</option>
-                        <option value="retail">Varejo</option>
-                        <option value="health">Saúde e Bem-estar</option>
-                        <option value="services">Serviços</option>
-                        <option value="other">Outro</option>
+                <form class="demo-form" id="demoForm">
+                    <input type="text" id="businessName" name="business_name" placeholder="Nome da sua empresa"
+                        class="form-input" required>
+                    <input type="email" id="email" name="email" placeholder="Seu melhor e-mail" class="form-input"
+                        required>
+                    <select id="city" name="city" class="form-input" required>
+                        <option value="">Carregando cidades...</option>
                     </select>
-                    <button type="submit" class="btn-submit">Iniciar Análise Gratuita →</button>
+                    <select id="category" name="category" class="form-input" required>
+                        <option value="">Carregando categorias...</option>
+                    </select>
+                    <button type="submit" class="btn-submit" id="submitBtn">Iniciar Análise Gratuita →</button>
                 </form>
                 <p class="cta-disclaimer">Sem cartão de crédito necessário • Análise instantânea • 100% Grátis</p>
             </div>
@@ -320,27 +324,105 @@
             });
         });
 
-        // Form submission (placeholder)
-        document.querySelector('.demo-form').addEventListener('submit', function(e) {
+        // API Configuration
+        const API_URL = 'http://localhost:8000';
+
+        // Fetch and populate categories
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_URL}/api/categories`);
+                const data = await response.json();
+                const categorySelect = document.getElementById('category');
+
+                categorySelect.innerHTML = '<option value="">Selecione sua categoria</option>';
+                data.categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.name;
+                    option.textContent = `${cat.name} - ${cat.description}`;
+                    categorySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                document.getElementById('category').innerHTML = '<option value="">Erro ao carregar categorias</option>';
+            }
+        }
+
+        // Fetch and populate cities
+        async function loadCities() {
+            try {
+                const response = await fetch(`${API_URL}/api/cities`);
+                const data = await response.json();
+                const citySelect = document.getElementById('city');
+
+                citySelect.innerHTML = '<option value="">Selecione sua cidade</option>';
+                data.cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city.name;
+                    option.textContent = `${city.name} - ${city.state}`;
+                    option.dataset.state = city.state; // Store state for later use
+                    citySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading cities:', error);
+                document.getElementById('city').innerHTML = '<option value="">Erro ao carregar cidades</option>';
+            }
+        }
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            loadCategories();
+            loadCities();
+        });
+
+        // Form submission
+        document.getElementById('demoForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            alert('Obrigado pelo interesse! Em breve você receberá seu relatório de análise competitiva.');
+
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processando...';
+
+            // Collect form data
+            const citySelect = document.getElementById('city');
+            const selectedCity = citySelect.options[citySelect.selectedIndex];
+
+            const formData = {
+                business_name: document.getElementById('businessName').value,
+                email: document.getElementById('email').value,
+                city: citySelect.value,
+                state: selectedCity.dataset.state,
+                category: document.getElementById('category').value
+            };
+
+            console.log('Demo request data:', formData);
+
+            // For now, just show a success message
+            // In the next phase, this will POST to /api/demo-request
+            alert(`Obrigado pelo interesse, ${formData.business_name}!\n\nEm breve você receberá a análise de concorrentes para ${formData.category} em ${formData.city}/${formData.state} no email: ${formData.email}`);
+
+            // Reset form
+            this.reset();
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
         });
 
         // Navbar scroll effect
         let lastScroll = 0;
         const navbar = document.querySelector('.navbar');
-        
+
         window.addEventListener('scroll', () => {
             const currentScroll = window.pageYOffset;
-            
+
             if (currentScroll > 100) {
                 navbar.classList.add('scrolled');
             } else {
                 navbar.classList.remove('scrolled');
             }
-            
+
             lastScroll = currentScroll;
         });
     </script>
 </body>
+
 </html>
