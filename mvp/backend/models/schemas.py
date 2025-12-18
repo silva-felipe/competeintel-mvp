@@ -2,9 +2,10 @@
 Pydantic models for request/response validation
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, EmailStr
 from typing import Optional, List, Dict, Any
 from enum import Enum
+from datetime import datetime
 
 
 class BusinessCategory(str, Enum):
@@ -180,3 +181,54 @@ class HealthResponse(BaseModel):
     version: str
     environment: str
     using_mock_data: bool
+
+
+# Demo Request Schemas
+
+class DemoRequestCreate(BaseModel):
+    """Request model for landing page demo requests"""
+    business_name: str = Field(..., min_length=2, max_length=200, description="Name of the business")
+    email: EmailStr = Field(..., description="Email to send analysis results")
+    city: str = Field(..., min_length=2, max_length=100, description="City name")
+    state: Optional[str] = Field(None, min_length=2, max_length=2, description="State abbreviation (e.g., SP, RJ)")
+    category: BusinessCategory = Field(..., description="Business category")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "business_name": "Padaria da Vila",
+                "email": "contato@padariadavila.com.br",
+                "city": "São Paulo",
+                "state": "SP",
+                "category": "Padaria"
+            }
+        }
+
+
+class DemoRequestResponse(BaseModel):
+    """Response model for demo request"""
+    id: str
+    business_name: str
+    email: str
+    city: str
+    state: Optional[str]
+    category: str
+    status: str
+    created_at: datetime
+    message: str = Field(..., description="User-friendly success message")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "business_name": "Padaria da Vila",
+                "email": "contato@padariadavila.com.br",
+                "city": "São Paulo",
+                "state": "SP",
+                "category": "Padaria",
+                "status": "completed",
+                "created_at": "2024-01-15T10:30:00",
+                "message": "Análise enviada com sucesso! Verifique seu email."
+            }
+        }
+

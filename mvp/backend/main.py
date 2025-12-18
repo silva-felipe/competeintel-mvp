@@ -2,20 +2,25 @@
 CompeteIntel API - Brazilian Competitor Intelligence Platform
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 import os
 from typing import Optional
+from sqlalchemy.orm import Session
 
 from models.schemas import (
     CompetitorSearchRequest,
     CompetitorSearchResponse,
-    HealthResponse
+    HealthResponse,
+    DemoRequestCreate,
+    DemoRequestResponse
 )
+from models.database import init_db, get_db
 from services.competitor_service import search_competitors
 from services.analysis_service import generate_analytics
 from services.cnpj_service import validate_cnpj, format_cnpj, lookup_cnpj
+from services.demo_service import process_demo_request, get_demo_request
 
 # Environment configuration
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
@@ -42,6 +47,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Database initialization
+@app.on_event("startup")
+def startup_db():
+    """Initialize database on startup"""
+    init_db()
 
 
 @app.get("/", tags=["Health"])
@@ -215,6 +227,53 @@ async def get_cities():
         })
     
     return {"cities": cities}
+
+
+@app.post("/api/demo-request", response_model=DemoRequestResponse, tags=["Demo"])
+async def create_demo_request(request: DemoRequestCreate, db: Session = Depends(get_db)):
+    """
+    Create a demo request from the landing page
+    
+    This endpoint:
+    1. Stores the demo request in the database
+    2. Triggers a competitor analysis
+    3. Sends the analysis results via email
+    4. Returns the request status
+    
+    **Example Request:**
+    ```json
+    {
+        "business_name": "Padaria da Vila",
+        "email": "contato@padariadavila.com.br",
+        "city": "São Paulo",
+        "state": "SP",
+        "category": "Padaria"
+    }
+    ```
+    """
+    try:
+        response = await process_demo_request(request, db)
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao processar solicitação: {str(e)}")
+
+
+@app.get("/api/demo-request/{request_id}", tags=["Demo"])
+async def get_demo_request_status(request_id: str, db: Session = Depends(get_db)):
+    """
+    Get the status and results of a demo request
+    
+    **Example:** /api/demo-request/123e4567-e89b-12d3-a456-426614174000
+    """
+    result = get_demo_request(request_id, db)
+    
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail="Solicitação não encontrada."
+        )
+    
+    return result
 
 
 if __name__ == "__main__":
