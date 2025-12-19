@@ -395,16 +395,42 @@
                 category: document.getElementById('category').value
             };
 
-            console.log('Demo request data:', formData);
+            console.log('Submitting demo request:', formData);
 
-            // For now, just show a success message
-            // In the next phase, this will POST to /api/demo-request
-            alert(`Obrigado pelo interesse, ${formData.business_name}!\n\nEm breve você receberá a análise de concorrentes para ${formData.category} em ${formData.city}/${formData.state} no email: ${formData.email}`);
+            try {
+                // POST to demo request endpoint
+                const response = await fetch(`${API_URL}/api/demo-request`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
 
-            // Reset form
-            this.reset();
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Success!
+                    console.log('Demo request created:', result);
+
+                    alert(`✅ ${result.message}\n\nID da Solicitação: ${result.id}\n\nVerifique seu email em alguns minutos para ver a análise completa!`);
+
+                    // Reset form after success
+                    this.reset();
+                } else {
+                    // API error
+                    console.error('API error:', result);
+                    alert(`❌ Erro ao processar sua solicitação:\n\n${result.detail || 'Por favor, tente novamente mais tarde.'}`);
+                }
+            } catch (error) {
+                // Network or other error
+                console.error('Request failed:', error);
+                alert(`❌ Erro ao conectar com o servidor.\n\nPor favor, verifique sua conexão e tente novamente.`);
+            } finally {
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
         });
 
         // Navbar scroll effect
