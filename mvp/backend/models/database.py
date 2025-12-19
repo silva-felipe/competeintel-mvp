@@ -9,12 +9,27 @@ from datetime import datetime
 import os
 import enum
 import uuid
+import logging
 
-# Database URL from environment
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://competeintel:dev_password_change_in_prod@localhost:5432/competitor_intel"
-)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Database URL from environment - REQUIRED
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise ValueError(
+        "DATABASE_URL environment variable is not set. "
+        "Please ensure it's configured in Cloud Run environment variables or your .env file."
+    )
+
+# Log database connection info (without showing password)
+if '@' in DATABASE_URL:
+    db_host = DATABASE_URL.split('@')[-1].split('/')[0]
+    logger.info(f"✓ Connecting to database at: {db_host}")
+else:
+    logger.warning("DATABASE_URL format unexpected")
 
 # Create engine
 engine = create_engine(DATABASE_URL, echo=True if os.getenv("ENVIRONMENT") == "development" else False)
