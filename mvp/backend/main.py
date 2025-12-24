@@ -251,11 +251,21 @@ async def create_demo_request(request: DemoRequestCreate, db: Session = Depends(
     }
     ```
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
         response = await process_demo_request(request, db)
         return response
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao processar solicitação: {str(e)}")
+        # Log the full error for debugging (visible in Cloud Run logs)
+        logger.error(f"Error processing demo request for {request.email}: {str(e)}", exc_info=True)
+        
+        # Return user-friendly message (hide technical details)
+        raise HTTPException(
+            status_code=500,
+            detail="Desculpe, ocorreu um erro temporário. Por favor, tente novamente em alguns instantes. Se o problema persistir, entre em contato conosco."
+        )
 
 
 @app.get("/api/demo-request/{request_id}", tags=["Demo"])
